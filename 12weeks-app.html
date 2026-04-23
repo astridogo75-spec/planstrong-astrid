@@ -1,0 +1,990 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>12 Weeks</title>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800;900&display=swap" rel="stylesheet"/>
+<script src="https://unpkg.com/react@18.3.1/umd/react.development.js" integrity="sha384-hD6/rw4ppMLGNu3tX5cjIb+uRZ7UkRJ6BPkLpg4hAu/6onKUg4lLsHAs9EBPT82L" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
+<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html,body,#root{width:100%;height:100%;overflow:hidden;}
+body{background:#000;font-family:'Inter',sans-serif;}
+::-webkit-scrollbar{display:none;}
+.screen{position:absolute;inset:0;display:flex;flex-direction:column;overflow:hidden;transition:transform .32s cubic-bezier(.4,0,.2,1),opacity .32s;}
+.screen.enter{transform:translateX(100%);opacity:0;}
+.screen.active{transform:translateX(0);opacity:1;}
+.screen.exit{transform:translateX(-40%);opacity:0;}
+.screen.back-enter{transform:translateX(-40%);opacity:0;}
+.screen.back-exit{transform:translateX(100%);opacity:0;}
+.scroll{flex:1;overflow-y:auto;overflow-x:hidden;}
+button{font-family:'Inter',sans-serif;}
+input{font-family:'Inter',sans-serif;}
+</style>
+</head>
+<body>
+<div id="root"></div>
+<script type="text/babel">
+const { useState, useEffect, useRef, useCallback } = React;
+
+// ═══════════════════════════════════════════════════
+// TOKENS
+// ═══════════════════════════════════════════════════
+const C = {
+  blue:       'oklch(0.55 0.22 252)',
+  blueL:      'oklch(0.68 0.16 252)',
+  blueD:      'oklch(0.38 0.14 252)',
+  orange:     'oklch(0.68 0.19 42)',
+  orangeL:    'oklch(0.78 0.14 42)',
+  green:      'oklch(0.68 0.16 155)',
+  red:        'oklch(0.62 0.2 25)',
+  bg:         '#0D1117',
+  card:       '#161C28',
+  card2:      '#1E2535',
+  border:     'rgba(255,255,255,0.07)',
+  tp:         '#F0F4FF',
+  ts:         '#8892AA',
+  tm:         '#3E4760',
+};
+const catColor = c => c==='H'?C.orange:c==='M'?C.blue:C.blueL;
+
+// ═══════════════════════════════════════════════════
+// PROGRAMME DATA COMPLET
+// ═══════════════════════════════════════════════════
+const PROGRAM = {
+  A: {
+    name:'Session A', color:C.orange, label:'Squat · Press · Pull',
+    exercises:[
+      { name:'Leg Press',         cat:'H', rm:7,  kg:30,
+        weeks:[[2,4,5,1],[2,4,4],[2,5],[2,4,5,4],[2,4,2],[2,4,5,1],[2,3],[2,4,4],[2,4,2],[2,4,5,2],[2,4,4],[1,2,3]] },
+      { name:'Bench Press',       cat:'M', rm:11, kg:25,
+        weeks:[[4,6,2],[4,6,7],[4,6,7,4,6,7,4,6],[4,6,7,4,6,2],[4,6,7,4,6,7,4,6,3],[4,6,7,4,6,3],[4,6,2],[4,6,7,4,6,7],[4,6,7,3],[4,6,7,4,6,7],[4,6,7,4,6,3],[2,3,4,2,3]] },
+      { name:'Triceps Extension', cat:'M', rm:11, kg:9,
+        weeks:[[4,6,7],[4,6],[4,6,7,4,6,7,4,6],[4,6,7,4,6,4],[4,6,7,4,6,7,4,5],[4,6,7,4,6],[4,6,7,4,6,7],[4,6,7,2],[4,6,7,4,6,7,5],[4,6,7,4,4],[4,6,7,3],[2,3,4,2,3]] },
+      { name:'Romanian Deadlift', cat:'L', rm:15, kg:12,
+        weeks:[[5,8,10,9],[5,8,9],[5,8,10,5,8,10,5],[5,8,10,5,8,5],[5,8,10,6],[5,8,10,5,8,10,8],[5,8,10,5,8,10,5,8,8],[5,8,10,5,8,6],[5,8,10,8],[5,8,10,8],[5,8,10,1],[2,4,5,4]] },
+    ]
+  },
+  B: {
+    name:'Session B', color:C.blue, label:'Press · Pull · Hip Hinge',
+    exercises:[
+      { name:'Barbell Military Press', cat:'H', rm:5,  kg:25,
+        weeks:[[2,3,3,2],[2,3,3,2,3,2],[2,3,2],[2,3,3,2,2],[2,3,3],[2,3],[2,3,3,2,2],[2,3,3,2],[2,3,3],[2,3,3,2,3],[2,3,3],[1,2,2,1]] },
+      { name:'Barbell Row',            cat:'H', rm:5,  kg:40,
+        weeks:[[2,3,3,2,3,2],[2,3,3,2,2],[2,3,2],[2,3,3,2],[2,3,3,2,2],[2,3,3],[2,3,3,2],[2,3,2],[2,3,3],[2,3,3,2,3],[2,3,3,2],[1,2,2,1]] },
+      { name:'Sumo Deadlift',          cat:'M', rm:11, kg:28,
+        weeks:[[4,6,7,5],[4,6,5],[4,6,7,4,6,7,5],[4,6,7,4,5],[4,6,4],[4,6,7,4,6,7,2],[4,6,7,4,6,7,4,5],[4,6,7,4,6,3],[4,6,7,4,6,3],[4,6,7,4,6,7],[4,6,7,3],[2,3,4,2,3]] },
+      { name:'Leg Extension',          cat:'L', rm:15, kg:22.5,
+        weeks:[[5,8,10,5,8,10,5],[5,8,10,5,8,5],[5,8,9],[5,8,10,9],[5,8,10,6],[5,8,10,5,8,10,8],[5,8,10,5,8,10,5,8,8],[5,8,10,5,8,6],[5,8,10,8],[5,8,10,8],[5,8,10,1],[2,4,5,4]] },
+    ]
+  },
+  C: {
+    name:'Session C', color:C.blueL, label:'Hip Hinge · Compound',
+    exercises:[
+      { name:'Sumo Deadlift',            cat:'H', rm:6,  kg:40,
+        weeks:[[2,3,4,1],[2,3,2],[2,3,4,3],[2,3,4,2,4],[2,3,4,1],[2,3,3],[2,3,4,3],[2,3,2],[2,3,3],[2,3,4,2,2],[2,3,4,1],[1,2,2,1]] },
+      { name:'Leg Press',                cat:'M', rm:11, kg:25,
+        weeks:[[4,6,7,4,6,7,5],[4,6,7,4,6,4],[4,6,5],[4,6,7],[4,6,6],[4,6,7,4,6,5],[4,6,7,4,6,7,4,6,6],[4,6,7,4,4],[4,6,7,4,6,3],[4,6,7,4,6,7],[4,6,7,3],[2,3,4,2,3]] },
+      { name:'Double KB Military Press', cat:'L', rm:14, kg:8,
+        weeks:[[5,7,9,1],[5,7,9,5,6],[5,7,9,5,7,9,5,4],[5,7,9,5,7,8],[5,7,9,5,7,9,4],[5,7,9,5,7,9],[5,7,9,8],[5,7,9,5,7,9,5,7],[5,7,9,3],[5,7,9,5,7,6],[5,7,9,5,5],[2,4,5,4]] },
+      { name:'One-Arm Row',              cat:'L', rm:15, kg:12,
+        weeks:[[5,8,10,9],[5,8,9],[5,8,10,5,8,10,5],[5,8,10,5,8,5],[5,8,10,5,8,8],[5,8,10,5,8,6],[5,8,10,5,8,10,8],[5,8,10,6],[5,8,10,5,8,3],[5,8,10,8],[5,8,10,1],[2,4,5,4]] },
+    ]
+  }
+};
+
+const WEEK_PLAN = [
+  ['A','B','C'],['B','C','A'],['C','A','B'],['A','C','B'],['B','A','C'],['C','B','A'],
+  ['A','B','C'],['C','A','B'],['B','C','A'],['A','C','B'],['C','B','A'],['B','A','C'],
+];
+
+// ═══════════════════════════════════════════════════
+// HELPERS
+// ═══════════════════════════════════════════════════
+const volEx = (ex, w) => {
+  const sets = ex.weeks[w-1] || [];
+  return sets.reduce((a,b)=>a+b,0) * ex.kg;
+};
+const volSession = (sk, w) => PROGRAM[sk].exercises.reduce((a,ex)=>a+volEx(ex,w),0);
+const totalReps = (ex, w) => (ex.weeks[w-1]||[]).reduce((a,b)=>a+b,0);
+
+const LS_KEY = '12weeks_v2';
+const defaultState = () => ({
+  userName: 'Astrid',
+  currentWeek: 3,
+  programStart: '2026-04-01',
+  completed: {},   // { "3-B": { date, duration, logs: {exName: [repsActual]} } }
+});
+const loadState = () => { try { return JSON.parse(localStorage.getItem(LS_KEY)) || defaultState(); } catch { return defaultState(); } };
+const saveState = s => { try { localStorage.setItem(LS_KEY, JSON.stringify(s)); } catch {} };
+
+// ═══════════════════════════════════════════════════
+// SHARED COMPONENTS
+// ═══════════════════════════════════════════════════
+function StatusBar({ dark=true }) {
+  const c = dark ? C.tp : '#fff';
+  return (
+    <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',
+      padding:'14px 24px 0',flexShrink:0,position:'relative',zIndex:10}}>
+      <span style={{color:c,fontWeight:700,fontSize:15,fontVariantNumeric:'tabular-nums'}}>9:41</span>
+      <div style={{width:126,height:32,background:'#000',borderRadius:20,position:'absolute',left:'50%',transform:'translateX(-50%)',top:0}}/>
+      <div style={{display:'flex',gap:6,alignItems:'center'}}>
+        <svg width="17" height="12" viewBox="0 0 17 12" fill={c} opacity=".9">
+          <rect x="0" y="7" width="3" height="5" rx="0.8"/><rect x="4.7" y="4.5" width="3" height="7.5" rx="0.8"/>
+          <rect x="9.4" y="2" width="3" height="10" rx="0.8"/><rect x="14.1" y="0" width="3" height="12" rx="0.8"/>
+        </svg>
+        <svg width="15" height="11" viewBox="0 0 15 11" fill={c} opacity=".9">
+          <path d="M7.5 2.8C9.5 2.8 11.3 3.6 12.6 4.9l1-1C12 2.2 10 1.2 7.5 1.2S3 2.2 1.4 3.9l1 1C3.7 3.6 5.5 2.8 7.5 2.8z"/>
+          <path d="M7.5 6.2c1.1 0 2.1.4 2.8 1.1l1-1C10.2 5.2 8.9 4.5 7.5 4.5S4.8 5.2 3.7 6.3l1 1C5.4 6.6 6.4 6.2 7.5 6.2z"/>
+          <circle cx="7.5" cy="9.5" r="1.5"/>
+        </svg>
+        <svg width="26" height="13" viewBox="0 0 26 13" fill="none">
+          <rect x=".5" y=".5" width="22" height="12" rx="3.5" stroke={c} strokeOpacity=".4"/>
+          <rect x="2" y="2" width="17" height="9" rx="2" fill={c}/>
+          <path d="M24 4.5v4c.8-.3 1.5-1.2 1.5-2s-.7-1.7-1.5-2z" fill={c} fillOpacity=".4"/>
+        </svg>
+      </div>
+    </div>
+  );
+}
+
+function TabBar({ active, onNav }) {
+  const tabs=[{id:'home',l:'Accueil',icon:'⌂'},{id:'programme',l:'Programme',icon:'◫'},{id:'stats',l:'Stats',icon:'◈'},{id:'profil',l:'Profil',icon:'◉'}];
+  return (
+    <div style={{display:'flex',background:'rgba(10,13,20,0.97)',borderTop:`1px solid ${C.border}`,
+      padding:'10px 0 env(safe-area-inset-bottom,20px)',flexShrink:0}}>
+      {tabs.map(t=>(
+        <div key={t.id} onClick={()=>onNav(t.id)} style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3,cursor:'pointer',padding:'2px 0'}}>
+          <span style={{fontSize:18,opacity:active===t.id?1:0.3}}>{t.icon}</span>
+          <span style={{fontSize:10,color:active===t.id?C.blue:C.tm,fontWeight:active===t.id?700:400}}>{t.l}</span>
+        </div>
+      ))}
+    </div>
+  );
+}
+
+function Btn({ children, onClick, color=C.blue, style={}, outline=false }) {
+  return (
+    <button onClick={onClick} style={{
+      width:'100%', border:'none', borderRadius:16, padding:'15px 20px',
+      color: outline ? color : '#fff', fontSize:15, fontWeight:700, cursor:'pointer',
+      background: outline ? `${color}18` : `linear-gradient(135deg,${color},${color.replace('0.55','0.42').replace('0.68','0.55')})`,
+      boxShadow: outline ? 'none' : `0 8px 24px ${color}44`,
+      border: outline ? `1.5px solid ${color}55` : 'none',
+      ...style
+    }}>{children}</button>
+  );
+}
+
+function Badge({ text, color=C.blue }) {
+  return <span style={{background:`${color}22`,color,fontSize:11,fontWeight:700,padding:'3px 10px',borderRadius:20,letterSpacing:.5}}>{text}</span>;
+}
+
+function ProgressBar({ v, max=100, color=C.blue, h=5, style={} }) {
+  return (
+    <div style={{background:'rgba(255,255,255,0.06)',borderRadius:99,height:h,overflow:'hidden',...style}}>
+      <div style={{width:`${Math.max(0,Math.min(100,(v/max)*100))}%`,height:'100%',background:color,borderRadius:99,transition:'width .5s'}}/>
+    </div>
+  );
+}
+
+function BackBtn({ onBack, label='Retour' }) {
+  return (
+    <button onClick={onBack} style={{background:'none',border:'none',color:C.blue,fontSize:14,fontWeight:600,cursor:'pointer',display:'flex',alignItems:'center',gap:5,padding:'4px 0'}}>
+      <span style={{fontSize:18,lineHeight:1}}>‹</span> {label}
+    </button>
+  );
+}
+
+// ═══════════════════════════════════════════════════
+// SCREEN: HOME
+// ═══════════════════════════════════════════════════
+function ScreenHome({ state, setState, navigate }) {
+  const { currentWeek: week, userName, completed } = state;
+  const plan = WEEK_PLAN[week-1];
+  const sessionsDone = plan.filter(sk => completed[`${week}-${sk}`]);
+  const nextSession = plan.find(sk => !completed[`${week}-${sk}`]);
+  const todayVol = nextSession ? Math.round(volSession(nextSession, week)) : 0;
+
+  // Week progress
+  const weekVol = plan.reduce((a,sk)=>{
+    const log = completed[`${week}-${sk}`];
+    if(!log) return a;
+    return a + Object.values(log.logs||{}).reduce((s,reps)=>s+reps.reduce((x,r)=>x+r,0)*20,0);
+  }, 0) || Math.round(sessionsDone.length * 1400);
+
+  const days = ['Dim','Lun','Mar','Mer','Jeu','Ven','Sam'];
+  const today = new Date();
+
+  return (
+    <div style={{background:C.bg,flex:1,display:'flex',flexDirection:'column'}}>
+      <StatusBar/>
+      <div className="scroll">
+        {/* Header */}
+        <div style={{padding:'14px 22px 0'}}>
+          <p style={{color:C.ts,fontSize:13,fontWeight:500}}>
+            {today.toLocaleDateString('fr-FR',{weekday:'long',day:'numeric',month:'long'})}
+          </p>
+          <h1 style={{color:C.tp,fontSize:26,fontWeight:900,lineHeight:1.2,marginTop:4}}>
+            Bonjour <span style={{color:C.orange}}>{userName}</span> 👋
+          </h1>
+        </div>
+
+        {/* Today card */}
+        {nextSession ? (
+          <div onClick={()=>navigate('session-detail',{sessionKey:nextSession,week})} style={{
+            margin:'18px 18px 0',
+            background:`linear-gradient(140deg,${C.blue} 0%,oklch(0.42 0.22 275) 100%)`,
+            borderRadius:24,padding:'20px',position:'relative',overflow:'hidden',cursor:'pointer'
+          }}>
+            <div style={{position:'absolute',right:-20,top:-20,width:140,height:140,background:'rgba(255,255,255,0.05)',borderRadius:'50%'}}/>
+            <div style={{position:'absolute',right:40,bottom:-40,width:100,height:100,background:'rgba(255,255,255,0.03)',borderRadius:'50%'}}/>
+            <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',position:'relative'}}>
+              <div>
+                <div style={{display:'inline-block',background:'rgba(255,255,255,0.18)',borderRadius:20,padding:'3px 12px',fontSize:11,fontWeight:700,color:'#fff',letterSpacing:.5,marginBottom:8}}>
+                  SEMAINE {week}
+                </div>
+                <h2 style={{color:'#fff',fontSize:23,fontWeight:900}}>{PROGRAM[nextSession].name}</h2>
+                <p style={{color:'rgba(255,255,255,0.65)',fontSize:13,marginTop:4}}>{PROGRAM[nextSession].exercises.length} exercices · ~55 min · {todayVol} kg</p>
+              </div>
+              <div style={{background:'rgba(255,255,255,0.18)',borderRadius:14,padding:'10px 16px',textAlign:'center',backdropFilter:'blur(10px)',flexShrink:0}}>
+                <span style={{color:'#fff',fontSize:30,fontWeight:900}}>{nextSession}</span>
+              </div>
+            </div>
+            <div style={{marginTop:16,position:'relative'}}>
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:5}}>
+                <span style={{color:'rgba(255,255,255,0.65)',fontSize:12}}>Semaine en cours</span>
+                <span style={{color:'#fff',fontSize:12,fontWeight:600}}>{sessionsDone.length}/3 séances</span>
+              </div>
+              <ProgressBar v={sessionsDone.length} max={3} color='rgba(255,255,255,0.9)' h={5}/>
+            </div>
+            <div style={{marginTop:14,background:'rgba(255,255,255,0.18)',borderRadius:13,padding:'13px',textAlign:'center',color:'#fff',fontSize:14,fontWeight:700,position:'relative'}}>
+              Commencer la séance →
+            </div>
+          </div>
+        ) : (
+          <div style={{margin:'18px 18px 0',background:`linear-gradient(140deg,${C.green},oklch(0.55 0.2 155))`,borderRadius:24,padding:'22px',textAlign:'center'}}>
+            <div style={{fontSize:36,marginBottom:8}}>🏆</div>
+            <h2 style={{color:'#fff',fontSize:20,fontWeight:900}}>Semaine {week} terminée !</h2>
+            <p style={{color:'rgba(255,255,255,0.75)',fontSize:13,marginTop:6}}>Toutes les séances complétées</p>
+          </div>
+        )}
+
+        {/* Cette semaine */}
+        <div style={{margin:'18px 18px 0'}}>
+          <h3 style={{color:C.tp,fontSize:15,fontWeight:700,marginBottom:10}}>Cette semaine</h3>
+          <div style={{display:'flex',gap:8}}>
+            {plan.map((sk,i)=>{
+              const done = !!completed[`${week}-${sk}`];
+              const isNext = sk === nextSession;
+              return (
+                <div key={i} onClick={()=>navigate('session-detail',{sessionKey:sk,week})}
+                  style={{flex:1,background:done?`${C.green}12`:isNext?C.card2:C.card,borderRadius:14,padding:'12px 6px',
+                    textAlign:'center',cursor:'pointer',
+                    border:done?`1px solid ${C.green}44`:isNext?`1.5px solid ${C.blue}55`:`1px solid ${C.border}`}}>
+                  <div style={{fontSize:10,color:C.ts,marginBottom:4}}>Séance {i+1}</div>
+                  <div style={{fontSize:22,fontWeight:900,color:done?C.green:isNext?C.blue:C.tm}}>{sk}</div>
+                  <div style={{fontSize:10,marginTop:3,color:done?C.green:isNext?C.blue:C.tm}}>
+                    {done?'✓ fait':isNext?'à faire':'à venir'}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Semaine selector */}
+        <div style={{margin:'18px 18px 0'}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+            <h3 style={{color:C.tp,fontSize:15,fontWeight:700}}>Semaine active</h3>
+            <div style={{display:'flex',gap:8,alignItems:'center'}}>
+              <button onClick={()=>setState(p=>({...p,currentWeek:Math.max(1,p.currentWeek-1)}))}
+                style={{background:C.card2,border:`1px solid ${C.border}`,borderRadius:8,width:32,height:32,color:C.ts,fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>‹</button>
+              <span style={{color:C.tp,fontWeight:700,fontSize:15,minWidth:24,textAlign:'center'}}>{week}</span>
+              <button onClick={()=>setState(p=>({...p,currentWeek:Math.min(12,p.currentWeek+1)}))}
+                style={{background:C.card2,border:`1px solid ${C.border}`,borderRadius:8,width:32,height:32,color:C.ts,fontSize:18,cursor:'pointer',display:'flex',alignItems:'center',justifyContent:'center'}}>›</button>
+            </div>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div style={{margin:'10px 18px 0',display:'grid',gridTemplateColumns:'1fr 1fr',gap:10}}>
+          {[
+            {l:'Volume sem.',v:`${weekVol.toLocaleString('fr')} kg`,color:C.blue},
+            {l:'Séances faites',v:`${Object.keys(completed).filter(k=>k.startsWith(`${week}-`)).length}/3`,color:C.orange},
+            {l:'Total réalisées',v:`${Object.keys(completed).length} séances`,color:C.green},
+            {l:'Programme',v:`Sem. ${week}/12`,color:C.blueL},
+          ].map((s,i)=>(
+            <div key={i} style={{background:C.card,borderRadius:16,padding:'14px',border:`1px solid ${C.border}`}}>
+              <p style={{color:C.ts,fontSize:11,marginBottom:4}}>{s.l}</p>
+              <p style={{color:C.tp,fontSize:18,fontWeight:800}}>{s.v}</p>
+              <div style={{width:32,height:3,background:s.color,borderRadius:99,marginTop:6,opacity:0.8}}/>
+            </div>
+          ))}
+        </div>
+
+        <div style={{height:24}}/>
+      </div>
+      <TabBar active="home" onNav={t=>navigate(t)}/>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════
+// SCREEN: PROGRAMME
+// ═══════════════════════════════════════════════════
+function ScreenProgramme({ state, navigate }) {
+  const { currentWeek, completed } = state;
+  const [sel,setSel] = useState(currentWeek);
+
+  const isWeekDone = w => WEEK_PLAN[w-1].every(sk=>completed[`${w}-${sk}`]);
+  const weekProgress = w => WEEK_PLAN[w-1].filter(sk=>completed[`${w}-${sk}`]).length;
+
+  return (
+    <div style={{background:C.bg,flex:1,display:'flex',flexDirection:'column'}}>
+      <StatusBar/>
+      <div className="scroll">
+        <div style={{padding:'14px 22px 14px'}}>
+          <h1 style={{color:C.tp,fontSize:22,fontWeight:900}}>Programme</h1>
+          <p style={{color:C.ts,fontSize:12,marginTop:2}}>12 semaines · Plan 33-206-244-54-174-399-196-396</p>
+        </div>
+
+        {/* Légende */}
+        <div style={{padding:'0 18px',display:'flex',gap:8,marginBottom:16}}>
+          {['A','B','C'].map(sk=>(
+            <div key={sk} style={{flex:1,background:C.card,borderRadius:12,padding:'10px 6px',textAlign:'center',border:`1px solid ${C.border}`}}>
+              <div style={{fontSize:20,fontWeight:900,color:PROGRAM[sk].color}}>{sk}</div>
+              <div style={{fontSize:9,color:C.ts,marginTop:2,lineHeight:1.4}}>{PROGRAM[sk].label}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Grid 12 semaines */}
+        <div style={{padding:'0 18px',display:'grid',gridTemplateColumns:'repeat(3,1fr)',gap:8}}>
+          {Array.from({length:12},(_,i)=>i+1).map(w=>{
+            const done=isWeekDone(w),cur=w===currentWeek,prog=weekProgress(w);
+            return (
+              <div key={w} onClick={()=>setSel(w)} style={{
+                background:sel===w?C.card2:C.card,borderRadius:14,padding:'11px 8px',cursor:'pointer',
+                border:sel===w?`1.5px solid ${C.blue}`:done?`1px solid ${C.green}44`:cur?`1px solid ${C.blue}33`:`1px solid ${C.border}`,position:'relative'
+              }}>
+                {done&&<span style={{position:'absolute',top:5,right:7,color:C.green,fontSize:10,fontWeight:800}}>✓</span>}
+                {cur&&!done&&<span style={{position:'absolute',top:6,right:8,width:7,height:7,background:C.orange,borderRadius:'50%',display:'block'}}/>}
+                <div style={{fontSize:10,color:cur?C.blue:done?C.green:C.ts,fontWeight:700,marginBottom:5}}>SEM {w}</div>
+                <div style={{display:'flex',gap:3,marginBottom:5}}>
+                  {WEEK_PLAN[w-1].map((s,i)=>(
+                    <div key={i} style={{flex:1,background:completed[`${w}-${s}`]?`${PROGRAM[s].color}40`:`${PROGRAM[s].color}18`,borderRadius:4,padding:'3px 0',textAlign:'center',fontSize:10,fontWeight:800,color:PROGRAM[s].color}}>{s}</div>
+                  ))}
+                </div>
+                <ProgressBar v={prog} max={3} color={done?C.green:C.blue} h={3}/>
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Détail semaine sélectionnée */}
+        <div style={{margin:'16px 18px',background:C.card,borderRadius:20,padding:'16px',border:`1px solid ${C.border}`}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+            <h3 style={{color:C.tp,fontSize:15,fontWeight:700}}>Semaine {sel}</h3>
+            <Badge text={sel===currentWeek?'EN COURS':isWeekDone(sel)?'TERMINÉE':sel<currentWeek?'PASSÉE':'À VENIR'} color={sel===currentWeek?C.blue:isWeekDone(sel)?C.green:C.ts}/>
+          </div>
+          {WEEK_PLAN[sel-1].map((sk,i)=>{
+            const done = !!completed[`${sel}-${sk}`];
+            return (
+              <div key={i} onClick={()=>navigate('session-detail',{sessionKey:sk,week:sel})}
+                style={{display:'flex',alignItems:'center',gap:10,padding:'10px 0',borderBottom:i<2?`1px solid ${C.border}`:'none',cursor:'pointer'}}>
+                <div style={{width:36,height:36,borderRadius:10,background:`${PROGRAM[sk].color}20`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:16,fontWeight:900,color:PROGRAM[sk].color,flexShrink:0}}>
+                  {done?'✓':sk}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{color:done?C.green:C.tp,fontSize:13,fontWeight:600}}>{PROGRAM[sk].name}</div>
+                  <div style={{color:C.ts,fontSize:11,marginTop:2}}>{PROGRAM[sk].exercises.map(e=>e.name).join(' · ')}</div>
+                </div>
+                <div style={{color:C.tm,fontSize:18}}>›</div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{height:8}}/>
+      </div>
+      <TabBar active="programme" onNav={t=>navigate(t)}/>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════
+// SCREEN: SESSION DETAIL
+// ═══════════════════════════════════════════════════
+function ScreenSessionDetail({ params, state, navigate, onBack }) {
+  const { sessionKey, week } = params;
+  const session = PROGRAM[sessionKey];
+  const alreadyDone = !!state.completed[`${week}-${sessionKey}`];
+  const totalVol = Math.round(volSession(sessionKey, week));
+
+  return (
+    <div style={{background:C.bg,flex:1,display:'flex',flexDirection:'column'}}>
+      <StatusBar/>
+      <div className="scroll">
+        {/* Header */}
+        <div style={{padding:'10px 22px 16px',background:`linear-gradient(180deg,${C.card2} 0%,transparent 100%)`}}>
+          <BackBtn onBack={onBack}/>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'flex-start',marginTop:12}}>
+            <div>
+              <div style={{display:'flex',gap:8,alignItems:'center',marginBottom:6}}>
+                <Badge text={`SEMAINE ${week}`} color={session.color}/>
+                {alreadyDone && <Badge text="TERMINÉE ✓" color={C.green}/>}
+              </div>
+              <h1 style={{color:C.tp,fontSize:24,fontWeight:900}}>{session.name}</h1>
+              <p style={{color:C.ts,fontSize:13,marginTop:4}}>{session.exercises.length} exercices · ~55 min · {totalVol.toLocaleString('fr')} kg vol.</p>
+            </div>
+            <div style={{width:52,height:52,borderRadius:16,background:`${session.color}22`,border:`1.5px solid ${session.color}44`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:22,fontWeight:900,color:session.color,flexShrink:0}}>
+              {sessionKey}
+            </div>
+          </div>
+        </div>
+
+        {/* Exercices */}
+        <div style={{padding:'0 18px'}}>
+          {session.exercises.map((ex,idx)=>{
+            const reps = ex.weeks[week-1] || [];
+            const vol = Math.round(reps.reduce((a,b)=>a+b,0) * ex.kg);
+            return (
+              <div key={idx} style={{background:C.card,borderRadius:18,padding:'15px',marginBottom:10,border:`1px solid ${C.border}`}}>
+                <div style={{display:'flex',alignItems:'center',gap:12,marginBottom:12}}>
+                  <div style={{width:40,height:40,borderRadius:12,background:`${catColor(ex.cat)}18`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:900,color:catColor(ex.cat),flexShrink:0}}>{ex.cat}</div>
+                  <div style={{flex:1}}>
+                    <div style={{color:C.tp,fontSize:14,fontWeight:700}}>{ex.name}</div>
+                    <div style={{color:C.ts,fontSize:11,marginTop:2}}>{ex.kg} kg · {ex.rm} RM · {reps.length} sets · {vol} kg vol.</div>
+                  </div>
+                </div>
+                {/* Séries */}
+                <div style={{display:'flex',gap:6,flexWrap:'wrap',marginBottom:10}}>
+                  {reps.map((r,si)=>(
+                    <div key={si} style={{minWidth:50,background:C.card2,borderRadius:10,padding:'7px 10px',textAlign:'center',border:`1px solid ${C.border}`}}>
+                      <div style={{color:C.tm,fontSize:9,marginBottom:2,fontWeight:600}}>SET {si+1}</div>
+                      <div style={{color:C.tp,fontWeight:800,fontSize:19,lineHeight:1}}>{r}</div>
+                      <div style={{color:C.ts,fontSize:9,marginTop:2}}>reps</div>
+                    </div>
+                  ))}
+                </div>
+                <div style={{padding:'7px 12px',background:`${catColor(ex.cat)}0D`,borderRadius:10,border:`1px solid ${catColor(ex.cat)}22`}}>
+                  <span style={{color:catColor(ex.cat),fontSize:11,fontWeight:600}}>Load: {ex.kg} kg · Target: {ex.rm} reps</span>
+                </div>
+              </div>
+            );
+          })}
+        </div>
+        <div style={{height:8}}/>
+      </div>
+
+      <div style={{padding:'10px 18px 24px',background:C.bg,borderTop:`1px solid ${C.border}`,flexShrink:0}}>
+        {alreadyDone ? (
+          <Btn color={C.green} style={{boxShadow:'none',opacity:.8}}>✓ Séance déjà complétée</Btn>
+        ) : (
+          <Btn onClick={()=>navigate('active-session',{sessionKey,week})}>
+            Démarrer la séance →
+          </Btn>
+        )}
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════
+// SCREEN: ACTIVE SESSION
+// ═══════════════════════════════════════════════════
+function ScreenActiveSession({ params, state, setState, navigate }) {
+  const { sessionKey, week } = params;
+  const session = PROGRAM[sessionKey];
+
+  const initChecked = () => session.exercises.map(ex => (ex.weeks[week-1]||[]).map(()=>false));
+  const [checked, setChecked] = useState(initChecked);
+  const [curEx, setCurEx] = useState(0);
+  const [seconds, setSeconds] = useState(0);
+  const [started, setStarted] = useState(false);
+
+  useEffect(()=>{
+    if(!started) return;
+    const t = setInterval(()=>setSeconds(s=>s+1),1000);
+    return ()=>clearInterval(t);
+  },[started]);
+
+  const toggle=(ei,si)=>{
+    if(!started) setStarted(true);
+    setChecked(p=>{const n=p.map(r=>[...r]);n[ei][si]=!n[ei][si];return n;});
+  };
+
+  const total=checked.flat().length, done=checked.flat().filter(Boolean).length;
+  const allDone=done===total;
+  const fmt=s=>`${String(Math.floor(s/60)).padStart(2,'0')}:${String(s%60).padStart(2,'0')}`;
+
+  const finish = () => {
+    const logs={};
+    session.exercises.forEach((ex,ei)=>{
+      const reps=ex.weeks[week-1]||[];
+      logs[ex.name]=reps.map((r,si)=>checked[ei][si]?r:0);
+    });
+    const key=`${week}-${sessionKey}`;
+    const entry={date:new Date().toISOString(),duration:Math.round(seconds/60)||Math.round(Math.random()*10+45),logs};
+    setState(p=>{
+      const ns={...p,completed:{...p.completed,[key]:entry}};
+      saveState(ns);
+      return ns;
+    });
+    navigate('session-complete',{sessionKey,week,duration:entry.duration,logs});
+  };
+
+  return (
+    <div style={{background:C.bg,flex:1,display:'flex',flexDirection:'column'}}>
+      <StatusBar/>
+      <div style={{padding:'10px 22px 12px',flexShrink:0}}>
+        <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:8}}>
+          <div>
+            <div style={{color:C.ts,fontSize:12,fontWeight:600}}>{session.name} · Sem. {week}</div>
+          </div>
+          <div style={{background:`${C.orange}18`,borderRadius:10,padding:'5px 12px',border:`1px solid ${C.orange}33`}}>
+            <span style={{color:C.orange,fontSize:14,fontWeight:700,fontVariantNumeric:'tabular-nums'}}>⏱ {fmt(seconds)}</span>
+          </div>
+        </div>
+        <ProgressBar v={done} max={total} color={C.orange} h={5}/>
+        <div style={{display:'flex',justifyContent:'space-between',marginTop:5}}>
+          <span style={{color:C.tm,fontSize:11}}>{done}/{total} séries</span>
+          <span style={{color:allDone?C.green:C.tm,fontSize:11,fontWeight:allDone?700:400}}>{allDone?'✓ Tout terminé !':`${total-done} restantes`}</span>
+        </div>
+      </div>
+
+      <div className="scroll" style={{padding:'0 18px'}}>
+        {session.exercises.map((ex,ei)=>{
+          const reps=ex.weeks[week-1]||[];
+          const isCur=ei===curEx;
+          const exDone=checked[ei].every(Boolean);
+          return (
+            <div key={ei} onClick={()=>setCurEx(ei)} style={{
+              background:isCur?C.card2:C.card,borderRadius:18,padding:'14px',marginBottom:10,
+              border:isCur?`1.5px solid ${C.blue}55`:exDone?`1px solid ${C.green}44`:`1px solid ${C.border}`,
+              cursor:'pointer', opacity:exDone&&!isCur?.7:1, transition:'all .2s'
+            }}>
+              <div style={{display:'flex',alignItems:'center',gap:10,marginBottom:isCur?12:0}}>
+                <div style={{width:34,height:34,borderRadius:10,background:exDone?`${C.green}22`:isCur?`${C.blue}22`:C.card,display:'flex',alignItems:'center',justifyContent:'center',fontSize:13,fontWeight:700,color:exDone?C.green:isCur?C.blue:C.ts,flexShrink:0,transition:'all .2s'}}>
+                  {exDone?'✓':ei+1}
+                </div>
+                <div style={{flex:1}}>
+                  <div style={{color:exDone?C.green:C.tp,fontSize:13,fontWeight:600,textDecoration:exDone?'line-through':'none'}}>{ex.name}</div>
+                  <div style={{color:C.ts,fontSize:11,marginTop:1}}>{ex.kg} kg</div>
+                </div>
+                <span style={{color:C.ts,fontSize:12,fontWeight:600}}>{checked[ei].filter(Boolean).length}/{reps.length}</span>
+              </div>
+              {isCur&&(
+                <div style={{display:'flex',gap:7,flexWrap:'wrap'}}>
+                  {reps.map((r,si)=>(
+                    <button key={si} onClick={e=>{e.stopPropagation();toggle(ei,si);}} style={{
+                      flex:'0 0 auto',minWidth:54,padding:'10px 8px',borderRadius:13,cursor:'pointer',textAlign:'center',transition:'all .2s',
+                      border:checked[ei][si]?'none':`1.5px solid ${C.border}`,
+                      background:checked[ei][si]?C.blue:C.card,
+                      boxShadow:checked[ei][si]?`0 4px 12px ${C.blue}44`:'none'
+                    }}>
+                      <div style={{color:checked[ei][si]?'rgba(255,255,255,0.7)':C.ts,fontSize:9,marginBottom:2}}>SÉR {si+1}</div>
+                      <div style={{color:checked[ei][si]?'#fff':C.tp,fontWeight:800,fontSize:17}}>{r}</div>
+                      <div style={{color:checked[ei][si]?'rgba(255,255,255,0.6)':C.ts,fontSize:9,marginTop:1}}>reps</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          );
+        })}
+        <div style={{height:8}}/>
+      </div>
+
+      <div style={{padding:'10px 18px 24px',background:C.bg,borderTop:`1px solid ${C.border}`,flexShrink:0}}>
+        <Btn color={C.green} onClick={finish}>
+          {allDone?'Terminer la séance ✓':'Terminer maintenant'}
+        </Btn>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════
+// SCREEN: SESSION COMPLETE
+// ═══════════════════════════════════════════════════
+function ScreenSessionComplete({ params, state, navigate }) {
+  const { sessionKey, week, duration=48 } = params;
+  const session = PROGRAM[sessionKey];
+  const totalVol = Math.round(volSession(sessionKey, week));
+
+  // Comparatif semaine précédente
+  const prevWeek = Math.max(1, week-1);
+  const prevKey = `${prevWeek}-${sessionKey}`;
+  const prevDone = state.completed[prevKey];
+
+  // Find same type session in prev week
+  const prevPlan = WEEK_PLAN[prevWeek-1];
+  const altSk = prevPlan.find(s=>s===sessionKey)||prevPlan[0];
+  const prevVol = Math.round(volSession(altSk, prevWeek));
+  const volDelta = totalVol - prevVol;
+
+  return (
+    <div style={{background:C.bg,flex:1,display:'flex',flexDirection:'column'}}>
+      <StatusBar/>
+      <div className="scroll" style={{padding:'0 22px'}}>
+        {/* Badge */}
+        <div style={{display:'flex',flexDirection:'column',alignItems:'center',paddingTop:24,paddingBottom:20}}>
+          <div style={{width:90,height:90,borderRadius:'50%',background:`linear-gradient(135deg,${C.green},oklch(0.55 0.2 155))`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:38,marginBottom:16,boxShadow:`0 0 48px ${C.green}44`}}>✓</div>
+          <h1 style={{color:C.tp,fontSize:26,fontWeight:900,textAlign:'center',marginBottom:6}}>Séance terminée !</h1>
+          <p style={{color:C.ts,fontSize:14,textAlign:'center',lineHeight:1.5}}>Excellent travail 💪<br/>{session.name} · Semaine {week}</p>
+        </div>
+
+        {/* Stats */}
+        <div style={{display:'grid',gridTemplateColumns:'1fr 1fr 1fr',gap:10,marginBottom:16}}>
+          {[
+            {l:'Durée',v:duration,u:'min'},
+            {l:'Volume',v:totalVol.toLocaleString('fr'),u:'kg'},
+            {l:'Séries',v:session.exercises.reduce((a,ex)=>(ex.weeks[week-1]||[]).length+a,0),u:'total'},
+          ].map((s,i)=>(
+            <div key={i} style={{background:C.card,borderRadius:16,padding:'14px 8px',border:`1px solid ${C.border}`,textAlign:'center'}}>
+              <div style={{color:C.ts,fontSize:11,marginBottom:4}}>{s.l}</div>
+              <div style={{color:C.tp,fontSize:18,fontWeight:800}}>{s.v}</div>
+              <div style={{color:C.ts,fontSize:10}}>{s.u}</div>
+            </div>
+          ))}
+        </div>
+
+        {/* Exercices résumé */}
+        <div style={{background:C.card,borderRadius:20,padding:'16px',border:`1px solid ${C.border}`,marginBottom:16}}>
+          <h3 style={{color:C.tp,fontSize:14,fontWeight:700,marginBottom:12}}>Exercices réalisés</h3>
+          {session.exercises.map((ex,i)=>{
+            const reps=ex.weeks[week-1]||[];
+            const vol=Math.round(reps.reduce((a,b)=>a+b,0)*ex.kg);
+            const prevReps=ex.weeks[prevWeek-1]||[];
+            const prevVol2=Math.round(prevReps.reduce((a,b)=>a+b,0)*ex.kg);
+            const delta=vol-prevVol2;
+            return (
+              <div key={i} style={{display:'flex',alignItems:'center',padding:'9px 0',borderBottom:i<session.exercises.length-1?`1px solid ${C.border}`:'none',gap:10}}>
+                <div style={{width:28,height:28,borderRadius:8,background:`${catColor(ex.cat)}18`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:10,fontWeight:900,color:catColor(ex.cat),flexShrink:0}}>{ex.cat}</div>
+                <div style={{flex:1}}>
+                  <div style={{color:C.tp,fontSize:12,fontWeight:600}}>{ex.name}</div>
+                  <div style={{color:C.ts,fontSize:11}}>{reps.length} séries · {vol} kg vol.</div>
+                </div>
+                {week>1&&<span style={{color:delta>0?C.green:delta<0?C.red:C.ts,fontSize:11,fontWeight:700}}>{delta>0?`+${delta}`:delta} kg</span>}
+              </div>
+            );
+          })}
+        </div>
+
+        {/* Comparatif */}
+        {week > 1 && (
+          <div style={{background:C.card,borderRadius:20,padding:'16px',border:`1px solid ${C.border}`,marginBottom:16}}>
+            <h3 style={{color:C.tp,fontSize:14,fontWeight:700,marginBottom:10}}>Comparatif vs Sem. {prevWeek}</h3>
+            <div style={{display:'flex',alignItems:'center',gap:12}}>
+              <div style={{flex:1,textAlign:'center',padding:'10px',background:C.card2,borderRadius:12}}>
+                <div style={{color:C.ts,fontSize:11,marginBottom:4}}>Sem. {prevWeek}</div>
+                <div style={{color:C.ts,fontSize:18,fontWeight:700}}>{prevVol.toLocaleString('fr')} kg</div>
+              </div>
+              <div style={{color:volDelta>=0?C.green:C.red,fontSize:20,fontWeight:900}}>{volDelta>=0?'↑':'↓'}</div>
+              <div style={{flex:1,textAlign:'center',padding:'10px',background:`${C.green}12`,borderRadius:12,border:`1px solid ${C.green}33`}}>
+                <div style={{color:C.green,fontSize:11,marginBottom:4}}>Sem. {week}</div>
+                <div style={{color:C.tp,fontSize:18,fontWeight:700}}>{totalVol.toLocaleString('fr')} kg</div>
+              </div>
+            </div>
+            <div style={{marginTop:10,textAlign:'center',color:volDelta>=0?C.green:C.red,fontSize:13,fontWeight:700}}>
+              {volDelta>=0?'+':''}{volDelta} kg {volDelta>=0?'de progression':'de régression'}
+            </div>
+          </div>
+        )}
+        <div style={{height:8}}/>
+      </div>
+
+      <div style={{padding:'10px 18px 24px',background:C.bg,borderTop:`1px solid ${C.border}`,flexShrink:0,display:'flex',gap:10}}>
+        <Btn color={C.blue} outline onClick={()=>navigate('stats')} style={{flex:1,boxShadow:'none'}}>Voir stats</Btn>
+        <Btn color={C.blue} onClick={()=>navigate('home')} style={{flex:2}}>Retour accueil</Btn>
+      </div>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════
+// SCREEN: STATS
+// ═══════════════════════════════════════════════════
+function ScreenStats({ state, navigate }) {
+  const { completed, currentWeek } = state;
+  const [hovBar, setHovBar] = useState(null);
+
+  // Volume par semaine (réel ou estimé)
+  const weekVols = Array.from({length:12},(_,i)=>{
+    const w=i+1;
+    const plan=WEEK_PLAN[w-1];
+    const doneVols=plan.map(sk=>completed[`${w}-${sk}`]?Math.round(volSession(sk,w)):0);
+    const total=doneVols.reduce((a,b)=>a+b,0);
+    if(total>0) return total;
+    // Estimation pour semaines non réalisées
+    if(w>currentWeek) return 0;
+    return Math.round(plan.reduce((a,sk)=>a+volSession(sk,w)*0.85,0));
+  });
+  const maxVol=Math.max(...weekVols.filter(v=>v>0),1);
+
+  // Progression par exercice (vol W1 vs W_cur)
+  const exProgress = Object.values(PROGRAM).flatMap(s=>s.exercises).map(ex=>{
+    const v1=volEx(ex,1), vN=volEx(ex,currentWeek);
+    return {name:ex.name,cat:ex.cat,pct:v1>0?Math.round(((vN-v1)/v1)*100):0,kg:ex.kg};
+  });
+
+  const totalVol=weekVols.reduce((a,b)=>a+b,0);
+  const totalSessions=Object.keys(completed).length;
+
+  return (
+    <div style={{background:C.bg,flex:1,display:'flex',flexDirection:'column'}}>
+      <StatusBar/>
+      <div className="scroll">
+        <div style={{padding:'14px 22px 14px'}}>
+          <h1 style={{color:C.tp,fontSize:22,fontWeight:900}}>Statistiques</h1>
+          <p style={{color:C.ts,fontSize:12,marginTop:2}}>Programme 12 semaines · Astrid</p>
+        </div>
+
+        {/* KPIs */}
+        <div style={{padding:'0 18px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:16}}>
+          {[
+            {l:'Volume estimé total',v:`${totalVol.toLocaleString('fr')} kg`,color:C.blue},
+            {l:'Séances réalisées',v:`${totalSessions} / ${currentWeek*3}`,color:C.orange},
+            {l:'Semaine en cours',v:`${currentWeek} / 12`,color:C.green},
+            {l:'Complétion',v:`${Math.round((totalSessions/(currentWeek*3))*100)}%`,color:C.blueL},
+          ].map((s,i)=>(
+            <div key={i} style={{background:C.card,borderRadius:16,padding:'14px',border:`1px solid ${C.border}`}}>
+              <p style={{color:C.ts,fontSize:11,marginBottom:3}}>{s.l}</p>
+              <p style={{color:C.tp,fontSize:18,fontWeight:800}}>{s.v}</p>
+              <div style={{width:28,height:3,background:s.color,borderRadius:99,marginTop:6}}/>
+            </div>
+          ))}
+        </div>
+
+        {/* Volume chart */}
+        <div style={{margin:'0 18px 16px',background:C.card,borderRadius:20,padding:'16px',border:`1px solid ${C.border}`}}>
+          <div style={{display:'flex',justifyContent:'space-between',alignItems:'center',marginBottom:14}}>
+            <h3 style={{color:C.tp,fontSize:14,fontWeight:700}}>Volume par semaine</h3>
+            <div style={{display:'flex',gap:10,fontSize:10,color:C.ts}}>
+              <span>● <span style={{color:C.blue}}>Réel</span></span>
+              <span>● <span style={{color:C.tm}}>Estimé</span></span>
+            </div>
+          </div>
+          <div style={{display:'flex',alignItems:'flex-end',gap:4,height:100,position:'relative'}}>
+            {weekVols.map((v,i)=>{
+              const w=i+1,h=v>0?(v/maxVol)*88:0,isDone=!!Object.keys(completed).some(k=>k.startsWith(`${w}-`));
+              const isCur=w===currentWeek;
+              return (
+                <div key={i} onMouseEnter={()=>setHovBar(i)} onMouseLeave={()=>setHovBar(null)}
+                  style={{flex:1,display:'flex',flexDirection:'column',alignItems:'center',gap:3,cursor:'pointer',position:'relative'}}>
+                  {hovBar===i&&v>0&&<div style={{position:'absolute',bottom:'100%',marginBottom:4,background:C.card2,borderRadius:6,padding:'2px 6px',fontSize:9,color:C.tp,fontWeight:700,whiteSpace:'nowrap',zIndex:9,border:`1px solid ${C.border}`}}>{v.toLocaleString('fr')} kg</div>}
+                  <div style={{width:'100%',height:h||2,borderRadius:'3px 3px 0 0',background:isCur?C.orange:isDone?C.blue:'rgba(255,255,255,0.06)',transition:'opacity .15s',opacity:hovBar===null||hovBar===i?1:0.5,minHeight:2}}/>
+                  <div style={{fontSize:8,color:isCur?C.orange:C.tm,fontWeight:isCur?700:400}}>S{w}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+
+        {/* Progression exercices */}
+        <div style={{margin:'0 18px 16px',background:C.card,borderRadius:20,padding:'16px',border:`1px solid ${C.border}`}}>
+          <h3 style={{color:C.tp,fontSize:14,fontWeight:700,marginBottom:14}}>Progression volume/exercice (S1→S{currentWeek})</h3>
+          {exProgress.sort((a,b)=>b.pct-a.pct).slice(0,6).map((ex,i)=>(
+            <div key={i} style={{marginBottom:12}}>
+              <div style={{display:'flex',justifyContent:'space-between',marginBottom:5,alignItems:'center'}}>
+                <div style={{display:'flex',alignItems:'center',gap:7}}>
+                  <div style={{width:20,height:20,borderRadius:5,background:`${catColor(ex.cat)}18`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:8,fontWeight:900,color:catColor(ex.cat)}}>{ex.cat}</div>
+                  <span style={{color:C.tp,fontSize:12,fontWeight:600}}>{ex.name}</span>
+                </div>
+                <span style={{color:ex.pct>=0?C.green:C.red,fontSize:12,fontWeight:700}}>{ex.pct>=0?'+':''}{ex.pct}%</span>
+              </div>
+              <ProgressBar v={Math.max(0,ex.pct)} max={100} color={catColor(ex.cat)} h={4}/>
+            </div>
+          ))}
+        </div>
+
+        {/* Sessions par semaine */}
+        <div style={{margin:'0 18px 16px',background:C.card,borderRadius:20,padding:'16px',border:`1px solid ${C.border}`}}>
+          <h3 style={{color:C.tp,fontSize:14,fontWeight:700,marginBottom:12}}>Séances réalisées</h3>
+          <div style={{display:'grid',gridTemplateColumns:'repeat(6,1fr)',gap:6}}>
+            {Array.from({length:12},(_,i)=>{
+              const w=i+1;
+              const prog=WEEK_PLAN[w-1].filter(sk=>completed[`${w}-${sk}`]).length;
+              return (
+                <div key={w} style={{textAlign:'center'}}>
+                  <div style={{fontSize:9,color:w===currentWeek?C.orange:C.tm,fontWeight:w===currentWeek?700:400,marginBottom:4}}>S{w}</div>
+                  <div style={{display:'flex',flexDirection:'column',gap:2}}>
+                    {[0,1,2].map(j=>(
+                      <div key={j} style={{height:6,borderRadius:2,background:j<prog?(w===currentWeek?C.orange:C.green):'rgba(255,255,255,0.06)'}}/>
+                    ))}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+        <div style={{height:12}}/>
+      </div>
+      <TabBar active="stats" onNav={t=>navigate(t)}/>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════
+// SCREEN: PROFIL
+// ═══════════════════════════════════════════════════
+function ScreenProfil({ state, setState, navigate }) {
+  const { userName, currentWeek } = state;
+  const totalDone = Object.keys(state.completed).length;
+  const reset = () => { if(window.confirm('Réinitialiser toutes les données ?')) { const ns=defaultState(); setState(ns); saveState(ns); } };
+
+  return (
+    <div style={{background:C.bg,flex:1,display:'flex',flexDirection:'column'}}>
+      <StatusBar/>
+      <div className="scroll">
+        <div style={{padding:'14px 22px 20px'}}>
+          <h1 style={{color:C.tp,fontSize:22,fontWeight:900}}>Profil</h1>
+        </div>
+        {/* Avatar */}
+        <div style={{display:'flex',alignItems:'center',gap:16,padding:'0 22px 24px'}}>
+          <div style={{width:72,height:72,borderRadius:22,background:`linear-gradient(135deg,${C.blue},${C.orange})`,display:'flex',alignItems:'center',justifyContent:'center',fontSize:28,fontWeight:900,color:'#fff',flexShrink:0}}>
+            {userName[0]}
+          </div>
+          <div>
+            <h2 style={{color:C.tp,fontSize:20,fontWeight:800}}>{userName}</h2>
+            <p style={{color:C.ts,fontSize:13,marginTop:3}}>Programme 12 semaines</p>
+            <Badge text={`SEMAINE ${currentWeek}`} color={C.blue}/>
+          </div>
+        </div>
+
+        {/* Stats */}
+        <div style={{padding:'0 18px',display:'grid',gridTemplateColumns:'1fr 1fr',gap:10,marginBottom:20}}>
+          {[
+            {l:'Séances faites',v:totalDone},
+            {l:'Semaine actuelle',v:`${currentWeek}/12`},
+            {l:'Sessions A',v:Object.keys(state.completed).filter(k=>k.endsWith('-A')).length},
+            {l:'Sessions B+C',v:Object.keys(state.completed).filter(k=>!k.endsWith('-A')).length},
+          ].map((s,i)=>(
+            <div key={i} style={{background:C.card,borderRadius:16,padding:'14px',border:`1px solid ${C.border}`}}>
+              <p style={{color:C.ts,fontSize:11,marginBottom:3}}>{s.l}</p>
+              <p style={{color:C.tp,fontSize:22,fontWeight:900}}>{s.v}</p>
+            </div>
+          ))}
+        </div>
+
+        {/* Réglages */}
+        <div style={{margin:'0 18px',background:C.card,borderRadius:20,padding:'16px',border:`1px solid ${C.border}`,marginBottom:16}}>
+          <h3 style={{color:C.tp,fontSize:14,fontWeight:700,marginBottom:14}}>Réglages</h3>
+          {[
+            {l:'Nom',v:userName},
+            {l:'Semaine active',v:`Semaine ${currentWeek}`},
+            {l:'Programme',v:'33-206-244-54-174-399'},
+          ].map((r,i)=>(
+            <div key={i} style={{display:'flex',justifyContent:'space-between',alignItems:'center',padding:'11px 0',borderBottom:i<2?`1px solid ${C.border}`:'none'}}>
+              <span style={{color:C.ts,fontSize:13}}>{r.l}</span>
+              <span style={{color:C.tp,fontSize:13,fontWeight:600}}>{r.v}</span>
+            </div>
+          ))}
+        </div>
+
+        <div style={{padding:'0 18px 24px'}}>
+          <button onClick={reset} style={{width:'100%',background:`${C.red}15`,border:`1px solid ${C.red}44`,borderRadius:14,padding:'13px',color:C.red,fontSize:14,fontWeight:700,cursor:'pointer'}}>
+            Réinitialiser les données
+          </button>
+        </div>
+      </div>
+      <TabBar active="profil" onNav={t=>navigate(t)}/>
+    </div>
+  );
+}
+
+// ═══════════════════════════════════════════════════
+// NAVIGATION ENGINE
+// ═══════════════════════════════════════════════════
+function App() {
+  const [appState, setAppState] = useState(loadState);
+  const [history, setHistory] = useState([{ screen:'home', params:{} }]);
+  const [transition, setTransition] = useState('active');
+  const [direction, setDirection] = useState('forward');
+  const prevRef = useRef(null);
+
+  const current = history[history.length-1];
+
+  const navigate = useCallback((screen, params={}) => {
+    setDirection('forward');
+    setTransition('exit');
+    setTimeout(()=>{
+      setHistory(h=>[...h,{screen,params}]);
+      setTransition('active');
+    },160);
+  },[]);
+
+  const goBack = useCallback(() => {
+    if(history.length<=1) return;
+    setDirection('back');
+    setTransition('back-exit');
+    setTimeout(()=>{
+      setHistory(h=>h.slice(0,-1));
+      setTransition('active');
+    },160);
+  },[history]);
+
+  const tabNav = useCallback((screen) => {
+    setDirection('forward');
+    setTransition('exit');
+    setTimeout(()=>{
+      setHistory([{screen,params:{}}]);
+      setTransition('active');
+    },160);
+  },[]);
+
+  const updateState = useCallback((updater) => {
+    setAppState(p=>{
+      const ns = typeof updater==='function'?updater(p):updater;
+      saveState(ns);
+      return ns;
+    });
+  },[]);
+
+  const commonProps = { state:appState, setState:updateState, navigate, onBack:goBack };
+
+  const renderScreen = () => {
+    const { screen, params } = current;
+    switch(screen) {
+      case 'home':            return <ScreenHome {...commonProps}/>;
+      case 'programme':       return <ScreenProgramme {...commonProps}/>;
+      case 'session-detail':  return <ScreenSessionDetail params={params} {...commonProps}/>;
+      case 'active-session':  return <ScreenActiveSession params={params} {...commonProps}/>;
+      case 'session-complete':return <ScreenSessionComplete params={params} {...commonProps}/>;
+      case 'stats':           return <ScreenStats {...commonProps}/>;
+      case 'profil':          return <ScreenProfil {...commonProps}/>;
+      default:                return <ScreenHome {...commonProps}/>;
+    }
+  };
+
+  return (
+    <div style={{width:'100%',height:'100%',background:'#000',display:'flex',alignItems:'center',justifyContent:'center',overflow:'hidden'}}>
+      {/* Phone frame on desktop */}
+      <div style={{
+        width:390,height:844,borderRadius:52,overflow:'hidden',
+        boxShadow:'0 0 0 1px rgba(255,255,255,0.1),0 30px 80px rgba(0,0,0,0.8)',
+        position:'relative',background:C.bg,flexShrink:0,
+        // On mobile: full screen
+        '@media(maxWidth:430px)':{width:'100%',height:'100%',borderRadius:0}
+      }}>
+        <div className={`screen ${transition}`} style={{background:C.bg}}>
+          {renderScreen()}
+        </div>
+      </div>
+    </div>
+  );
+}
+
+// Mobile full-screen override
+const mq = window.matchMedia('(max-width:430px)');
+if(mq.matches){
+  document.querySelector('#root').style.cssText='width:100%;height:100%;';
+}
+
+ReactDOM.createRoot(document.getElementById('root')).render(<App/>);
+</script>
+</body>
+</html>
